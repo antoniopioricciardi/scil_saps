@@ -9,9 +9,9 @@ echo "================================================================"
 EPISODES=20
 LEVEL_1="1-1"
 LEVEL_2="1-2"
-MODEL_1="scil_encoder_mario_1_1_efficientnet_b1_lam2.pth"
-MODEL_2="scil_encoder_mario_1_2_efficientnet_b1_lam2.pth"
-STITCHED="scil_stitched_1_1_enc_to_1_2_pol.pth"
+MODEL_1="../checkpoints/scil_encoder_mario_1_1_efficientnet_b1_lam2.pth"
+MODEL_2="../checkpoints/scil_encoder_mario_1_2_efficientnet_b1_lam2.pth"
+STITCHED="../checkpoints/scil_stitched_1_1_enc_to_1_2_pol.pth"
 
 echo ""
 echo "Configuration:"
@@ -34,7 +34,7 @@ echo "================================================================"
 echo ""
 echo "[1/4] Testing Model 1 on Level $LEVEL_1 (native)..."
 python ../test_mario_agent.py \
-    --model "../$MODEL_1" \
+    --model "$MODEL_1" \
     --model-type native \
     --level "$LEVEL_1" \
     --episodes $EPISODES \
@@ -43,7 +43,7 @@ python ../test_mario_agent.py \
 echo ""
 echo "[2/4] Testing Model 2 on Level $LEVEL_2 (native)..."
 python ../test_mario_agent.py \
-    --model "../$MODEL_2" \
+    --model "$MODEL_2" \
     --model-type native \
     --level "$LEVEL_2" \
     --episodes $EPISODES \
@@ -57,7 +57,7 @@ echo "================================================================"
 echo ""
 echo "[3/4] Testing Model 1 on Level $LEVEL_2 (cross-level)..."
 python ../test_mario_agent.py \
-    --model "../$MODEL_1" \
+    --model "$MODEL_1" \
     --model-type native \
     --level "$LEVEL_2" \
     --episodes $EPISODES \
@@ -66,7 +66,7 @@ python ../test_mario_agent.py \
 echo ""
 echo "[4/4] Testing Model 2 on Level $LEVEL_1 (cross-level)..."
 python ../test_mario_agent.py \
-    --model "../$MODEL_2" \
+    --model "$MODEL_2" \
     --model-type native \
     --level "$LEVEL_1" \
     --episodes $EPISODES \
@@ -77,14 +77,14 @@ echo "================================================================"
 echo "3. SAPS: Stitched model evaluation"
 echo "================================================================"
 
-if [ -f "../$STITCHED" ]; then
+if [ -f "$STITCHED" ]; then
     echo ""
     echo "[5/6] Testing Stitched Model (Enc 1 + Pol 2) on Level $LEVEL_1..."
     python ../test_mario_agent.py \
-        --model "../$STITCHED" \
+        --model "$STITCHED" \
         --model-type stitched \
-        --encoder-path "../$MODEL_1" \
-        --policy-path "../$MODEL_2" \
+        --encoder-path "$MODEL_1" \
+        --policy-path "$MODEL_2" \
         --level "$LEVEL_1" \
         --episodes $EPISODES \
         --output "stitched_enc1_pol2_on_1.json"
@@ -92,10 +92,10 @@ if [ -f "../$STITCHED" ]; then
     echo ""
     echo "[6/6] Testing Stitched Model (Enc 1 + Pol 2) on Level $LEVEL_2..."
     python ../test_mario_agent.py \
-        --model "../$STITCHED" \
+        --model "$STITCHED" \
         --model-type stitched \
-        --encoder-path "../$MODEL_1" \
-        --policy-path "../$MODEL_2" \
+        --encoder-path "$MODEL_1" \
+        --policy-path "$MODEL_2" \
         --level "$LEVEL_2" \
         --episodes $EPISODES \
         --output "stitched_enc1_pol2_on_2.json"

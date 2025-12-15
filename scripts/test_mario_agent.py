@@ -182,8 +182,10 @@ def test_episode(env, agent, render=False, max_steps=5000):
         'completed': False,
         'died': False,
         'time_penalty': 0,
-        'actions': [],
     }
+
+    # Track actions separately (not saved to JSON)
+    actions_taken = []
 
     while not done and step < max_steps:
         # Select and execute action
@@ -193,7 +195,7 @@ def test_episode(env, agent, render=False, max_steps=5000):
         # Update stats
         total_reward += reward
         step += 1
-        stats['actions'].append(action)
+        actions_taken.append(action)
 
         # Track position
         if 'x_pos' in info:
@@ -212,7 +214,7 @@ def test_episode(env, agent, render=False, max_steps=5000):
     stats['total_reward'] = total_reward
     stats['died'] = done and not stats['completed']
 
-    return stats
+    return stats, actions_taken
 
 
 def run_evaluation(env, agent, num_episodes=10, render=False, verbose=True):
@@ -230,13 +232,15 @@ def run_evaluation(env, agent, num_episodes=10, render=False, verbose=True):
         results: dict with aggregated statistics
     """
     all_stats = []
+    all_actions = []
 
     for episode in range(num_episodes):
         if verbose:
             print(f"\nEpisode {episode + 1}/{num_episodes}")
 
-        stats = test_episode(env, agent, render=render)
+        stats, actions = test_episode(env, agent, render=render)
         all_stats.append(stats)
+        all_actions.extend(actions)
 
         if verbose:
             print(f"  Steps: {stats['steps']}")
@@ -259,7 +263,6 @@ def run_evaluation(env, agent, num_episodes=10, render=False, verbose=True):
     }
 
     # Action distribution
-    all_actions = [a for ep in all_stats for a in ep['actions']]
     action_counts = np.bincount(all_actions, minlength=7)
     results['action_distribution'] = action_counts.tolist()
 
@@ -289,9 +292,26 @@ def print_results(results):
 
 def save_results(results, output_file):
     """Save results to JSON file"""
+
+    # Convert numpy types to Python types for JSON serialization
+    def convert_to_json_serializable(obj):
+        if isinstance(obj, np.integer):
+            return int(obj)
+        elif isinstance(obj, np.floating):
+            return float(obj)
+        elif isinstance(obj, np.ndarray):
+            return obj.tolist()
+        elif isinstance(obj, dict):
+            return {k: convert_to_json_serializable(v) for k, v in obj.items()}
+        elif isinstance(obj, list):
+            return [convert_to_json_serializable(item) for item in obj]
+        return obj
+
+    results_clean = convert_to_json_serializable(results)
+
     output_path = Path(output_file)
     with open(output_path, 'w') as f:
-        json.dump(results, f, indent=2)
+        json.dump(results_clean, f, indent=2)
     print(f"\n✓ Results saved to {output_path}")
 
 

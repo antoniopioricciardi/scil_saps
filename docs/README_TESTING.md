@@ -14,8 +14,8 @@ Complete toolkit for evaluating SCIL and SAPS models in Super Mario Bros.
 ### Option 1: Manual Testing (Recommended for First Time)
 
 ```bash
-# Install Mario environment first
-pip install gym-super-mario-bros
+# Install Mario environment first (using uv - recommended for this project)
+uv pip install gym==0.25.2 gym-super-mario-bros nes-py "numpy<2.0"
 
 # Test a model (with visual feedback)
 python test_mario_agent.py \
@@ -195,9 +195,16 @@ wait
 
 ## 🐛 Troubleshooting
 
-### "gym_super_mario_bros not found"
+### "gym_super_mario_bros not found" or "no module named gym"
 ```bash
-pip install gym-super-mario-bros
+# Install all dependencies with correct versions
+uv pip install gym==0.25.2 gym-super-mario-bros nes-py "numpy<2.0"
+```
+
+### "Python integer 1024 out of bounds for uint8"
+This is a NumPy 2.0 compatibility issue. Downgrade NumPy:
+```bash
+uv pip install "numpy<2.0"
 ```
 
 ### "CUDA out of memory"

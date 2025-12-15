@@ -17,8 +17,8 @@ from losses_paper import SupConLoss
 #   "mario_1_1_expert.pkl"         → 1_1
 #   "mario_1_[12]_expert.pkl"      → 1_1_1_2
 #   ["mario_1_1.pkl", "mario_1_2.pkl"] → 1_1_1_2
-# DATA_FILES = "mario_*_expert.pkl"
-DATA_FILES = "mario_1_2_expert.pkl"
+# DATA_FILES = "data/mario_*_expert.pkl"
+DATA_FILES = "data/mario_1_2_expert.pkl"
 
 # Model selection: 'resnet18' or 'efficientnet-b0' or 'efficientnet-b1' or 'efficientnet-b2'
 BACKBONE = "efficientnet-b1"  # Options: 'resnet18', 'efficientnet-b0', 'efficientnet-b1', 'efficientnet-b2'
@@ -55,7 +55,7 @@ TEMPERATURE = 0.05
 LAMBDA_SUPCON = 2 #0.5  # Weight for SupCon loss
 FREEZE_BACKBONE = False  # Set True for faster training, False for better performance
 
-SAVE_PATH = f"scil_encoder_mario_{DATA_TAG}_{BACKBONE.replace('-', '_')}_lam{LAMBDA_SUPCON}.pth"
+SAVE_PATH = f"checkpoints/scil_encoder_mario_{DATA_TAG}_{BACKBONE.replace('-', '_')}_lam{LAMBDA_SUPCON}.pth"
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 

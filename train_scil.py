@@ -13,7 +13,7 @@ from losses_paper import SupConLoss
 #   "mario_*_expert.pkl"           → all_levels
 #   "mario_1_1_expert.pkl"         → 1_1
 #   ["mario_1_1.pkl", "mario_1_2.pkl"] → 1_1_1_2
-DATA_FILES = "mario_*_expert.pkl"  # Will load all expert data files
+DATA_FILES = "data/mario_*_expert.pkl"  # Will load all expert data files
 
 # Auto-generate data tag for filename
 def get_data_tag(data_files):
@@ -40,7 +40,7 @@ def get_data_tag(data_files):
 
 DATA_TAG = get_data_tag(DATA_FILES)
 LAMBDA_SUPCON = 2.0  # Increased from 0.5 - make SupCon more important for clustering
-SAVE_PATH = f"scil_encoder_mario_{DATA_TAG}_naturecnn_lam{LAMBDA_SUPCON}.pth"
+SAVE_PATH = f"checkpoints/scil_encoder_mario_{DATA_TAG}_naturecnn_lam{LAMBDA_SUPCON}.pth"
 
 BATCH_SIZE = 256  # Increased from 64 - SCIL paper recommends large batches
 LR = 3e-4
