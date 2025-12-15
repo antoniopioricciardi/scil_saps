@@ -8,13 +8,15 @@ from PIL import Image
 import glob
 
 class MarioSCILDataset(Dataset):
-    def __init__(self, pkl_files):
+    def __init__(self, pkl_files, img_size=84, use_imagenet_norm=False):
         """
         Args:
             pkl_files: Can be:
                 - Single string path: "mario_1_1.pkl"
                 - List of paths: ["mario_1_1.pkl", "mario_1_2.pkl"]
                 - Glob pattern: "mario_*.pkl" (loads all matching files)
+            img_size: Image size to resize to (84 for Nature CNN, 224 for ResNet)
+            use_imagenet_norm: Use ImageNet normalization (for pretrained ResNet) or [-1,1] (for from-scratch)
         """
         # Handle different input types
         if isinstance(pkl_files, str):
@@ -39,14 +41,22 @@ class MarioSCILDataset(Dataset):
                 print(f"    Added {len(file_data)} frames")
 
         print(f"Total frames loaded: {len(self.data)}")
-            
+
         # Preprocessing - Keep RGB for Mario (color is important!)
-        self.transform = T.Compose([
+        transforms = [
             T.ToPILImage(),
-            T.Resize((84, 84)),
-            T.ToTensor(),  # Scales [0, 255] -> [0.0, 1.0], outputs (3, 84, 84)
-            T.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])  # Scale to [-1, 1]
-        ])
+            T.Resize((img_size, img_size)),
+            T.ToTensor(),  # Scales [0, 255] -> [0.0, 1.0]
+        ]
+
+        if use_imagenet_norm:
+            # ImageNet normalization for pretrained ResNet
+            transforms.append(T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]))
+        else:
+            # Standard [-1, 1] normalization for training from scratch
+            transforms.append(T.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]))
+
+        self.transform = T.Compose(transforms)
 
     def __len__(self):
         return len(self.data)
