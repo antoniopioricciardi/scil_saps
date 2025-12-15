@@ -35,10 +35,3 @@ dev = [
     "jupyter>=1.0.0",
     "ipykernel>=6.25.0",
 ]
-
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
-[tool.uv]
-dev-dependencies = []
