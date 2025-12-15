@@ -1,0 +1,39 @@
+{
+  "num_episodes": 1,
+  "episodes": [
+    {
+      "steps": 764,
+      "total_reward": 706.0,
+      "max_x_pos": 801,
+      "final_x_pos": 801,
+      "completed": false,
+      "died": true,
+      "time_penalty": 0
+    }
+  ],
+  "mean_steps": 764.0,
+  "std_steps": 0.0,
+  "mean_reward": 706.0,
+  "std_reward": 0.0,
+  "mean_max_x": 801.0,
+  "std_max_x": 0.0,
+  "completion_rate": 0.0,
+  "death_rate": 1.0,
+  "action_distribution": [
+    91,
+    445,
+    220,
+    0,
+    0,
+    8,
+    0
+  ],
+  "config": {
+    "level": "1-1",
+    "model": "../checkpoints/scil_stitched_1_1_enc_to_1_2_pol.pth",
+    "model_type": "stitched",
+    "episodes": 1,
+    "max_steps": 5000,
+    "seed": 42
+  }
+}
