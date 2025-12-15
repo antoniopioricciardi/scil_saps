@@ -1,0 +1,26 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual envs and secrets
+.venv/
+venv/
+env/
+.python-version
+.env
+*.env
+*.env.*
+.claude/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS cruft
+.DS_Store
+Thumbs.db
+
+# Editor swap
+*.swp
+*.swo
+*~
