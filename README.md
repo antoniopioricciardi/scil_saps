@@ -31,8 +31,18 @@ scil_saps/
 
 ### 1. Installation
 ```bash
-uv pip install gym==0.25.2 gym-super-mario-bros nes-py "numpy<2.0"
-uv pip install scikit-learn matplotlib seaborn
+# Install all dependencies
+make install-dev  # Includes Jupyter for notebooks
+# or
+uv sync           # Same as above
+
+# Production install (no dev tools)
+make install
+# or
+uv sync --no-dev
+
+# Verify installation
+make test
 ```
 
 ### 2. Train Models

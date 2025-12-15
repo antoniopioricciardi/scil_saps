@@ -11,15 +11,22 @@ Complete toolkit for evaluating SCIL and SAPS models in Super Mario Bros.
 
 ## 🚀 Quick Start
 
+### Prerequisites
+
+```bash
+# From project root, install all dependencies
+make install-dev  # Includes Jupyter for notebooks
+# or
+uv sync
+```
+
 ### Option 1: Manual Testing (Recommended for First Time)
 
 ```bash
-# Install Mario environment first (using uv - recommended for this project)
-uv pip install gym==0.25.2 gym-super-mario-bros nes-py "numpy<2.0"
-
 # Test a model (with visual feedback)
+cd scripts
 python test_mario_agent.py \
-    --model scil_encoder_mario_1_1_efficientnet_b1_lam2.pth \
+    --model ../checkpoints/scil_encoder_mario_1_1_efficientnet_b1_lam2.pth \
     --model-type native \
     --level 1-1 \
     --episodes 5 \
@@ -60,8 +67,9 @@ python test_mario_agent.py \
 ### 1. Test Native Model
 
 ```bash
+cd scripts
 python test_mario_agent.py \
-    --model scil_encoder_mario_1_1_efficientnet_b1_lam2.pth \
+    --model ../checkpoints/scil_encoder_mario_1_1_efficientnet_b1_lam2.pth \
     --model-type native \
     --level 1-1 \
     --episodes 20
@@ -70,11 +78,12 @@ python test_mario_agent.py \
 ### 2. Test Stitched Model (SAPS)
 
 ```bash
+cd scripts
 python test_mario_agent.py \
-    --model scil_stitched_1_1_enc_to_1_2_pol.pth \
+    --model ../checkpoints/scil_stitched_1_1_enc_to_1_2_pol.pth \
     --model-type stitched \
-    --encoder-path scil_encoder_mario_1_1_efficientnet_b1_lam2.pth \
-    --policy-path scil_encoder_mario_1_2_efficientnet_b1_lam2.pth \
+    --encoder-path ../checkpoints/scil_encoder_mario_1_1_efficientnet_b1_lam2.pth \
+    --policy-path ../checkpoints/scil_encoder_mario_1_2_efficientnet_b1_lam2.pth \
     --level 1-1 \
     --episodes 20
 ```
@@ -82,8 +91,9 @@ python test_mario_agent.py \
 ### 3. Watch Agent Play
 
 ```bash
+cd scripts
 python test_mario_agent.py \
-    --model scil_encoder_mario_1_1_efficientnet_b1_lam2.pth \
+    --model ../checkpoints/scil_encoder_mario_1_1_efficientnet_b1_lam2.pth \
     --model-type native \
     --level 1-1 \
     --episodes 3 \
@@ -93,11 +103,12 @@ python test_mario_agent.py \
 ### 4. Compare Multiple Results
 
 ```bash
-# After running tests, compare results
+# After running tests, compare results (from scripts/ directory)
+cd scripts
 python compare_results.py \
-    results/native_1_on_1.json \
-    results/stitched_enc1_pol2_on_1.json \
-    results/native_1_on_2.json
+    ../results/native_1_on_1.json \
+    ../results/stitched_enc1_pol2_on_1.json \
+    ../results/native_1_on_2.json
 ```
 
 ## 📈 Expected SAPS Results
@@ -197,14 +208,18 @@ wait
 
 ### "gym_super_mario_bros not found" or "no module named gym"
 ```bash
-# Install all dependencies with correct versions
-uv pip install gym==0.25.2 gym-super-mario-bros nes-py "numpy<2.0"
+# Install all dependencies from project root
+cd /path/to/scil_saps
+make install-dev
+# or
+uv sync
 ```
 
 ### "Python integer 1024 out of bounds for uint8"
-This is a NumPy 2.0 compatibility issue. Downgrade NumPy:
+This is a NumPy 2.0 compatibility issue. The pyproject.toml already specifies numpy<2.0.
+If you still see this error, ensure you're using the project's dependencies:
 ```bash
-uv pip install "numpy<2.0"
+uv sync
 ```
 
 ### "CUDA out of memory"
@@ -242,16 +257,19 @@ xvfb-run -s "-screen 0 1400x900x24" python test_mario_agent.py --render ...
 ## 📊 Example Analysis Workflow
 
 ```bash
+cd scripts
+
 # 1. Quick visual test
-python test_mario_agent.py --model scil_encoder_mario_1_1_efficientnet_b1_lam2.pth \
+python test_mario_agent.py \
+    --model ../checkpoints/scil_encoder_mario_1_1_efficientnet_b1_lam2.pth \
     --level 1-1 --episodes 3 --render
 
 # 2. Full evaluation
 ./run_evaluation.sh
 
 # 3. Analyze results
-cd results
-python ../compare_results.py *.json
+cd ../results
+python ../scripts/compare_results.py *.json
 
 # 4. Check specific episode details
 cat native_1_on_1.json | jq '.episodes[0]'

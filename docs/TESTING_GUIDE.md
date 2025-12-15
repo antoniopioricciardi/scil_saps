@@ -2,19 +2,23 @@
 
 ## Quick Start
 
+All testing scripts should be run from the `scripts/` directory.
+
 ### Test a Native Model
 
 ```bash
+cd scripts
+
 # Test model on level 1-1 (10 episodes, no rendering)
 python test_mario_agent.py \
-    --model scil_encoder_mario_1_1_efficientnet_b1_lam2.pth \
+    --model ../checkpoints/scil_encoder_mario_1_1_efficientnet_b1_lam2.pth \
     --model-type native \
     --level 1-1 \
     --episodes 10
 
 # Test with rendering (watch the agent play)
 python test_mario_agent.py \
-    --model scil_encoder_mario_1_1_efficientnet_b1_lam2.pth \
+    --model ../checkpoints/scil_encoder_mario_1_1_efficientnet_b1_lam2.pth \
     --model-type native \
     --level 1-1 \
     --episodes 5 \
@@ -22,7 +26,7 @@ python test_mario_agent.py \
 
 # Test on different level
 python test_mario_agent.py \
-    --model scil_encoder_mario_1_2_efficientnet_b1_lam2.pth \
+    --model ../checkpoints/scil_encoder_mario_1_2_efficientnet_b1_lam2.pth \
     --model-type native \
     --level 1-2 \
     --episodes 10
@@ -31,12 +35,14 @@ python test_mario_agent.py \
 ### Test a Stitched Model
 
 ```bash
+cd scripts
+
 # Test stitched model (encoder from 1-1, policy from 1-2)
 python test_mario_agent.py \
-    --model scil_stitched_1_1_enc_to_1_2_pol.pth \
+    --model ../checkpoints/scil_stitched_1_1_enc_to_1_2_pol.pth \
     --model-type stitched \
-    --encoder-path scil_encoder_mario_1_1_efficientnet_b1_lam2.pth \
-    --policy-path scil_encoder_mario_1_2_efficientnet_b1_lam2.pth \
+    --encoder-path ../checkpoints/scil_encoder_mario_1_1_efficientnet_b1_lam2.pth \
+    --policy-path ../checkpoints/scil_encoder_mario_1_2_efficientnet_b1_lam2.pth \
     --level 1-1 \
     --episodes 10
 ```
@@ -44,23 +50,25 @@ python test_mario_agent.py \
 ### Compare Models
 
 ```bash
+cd scripts
+
 # Test native model trained on 1-1
 python test_mario_agent.py \
-    --model scil_encoder_mario_1_1_efficientnet_b1_lam2.pth \
+    --model ../checkpoints/scil_encoder_mario_1_1_efficientnet_b1_lam2.pth \
     --model-type native \
     --level 1-1 \
     --episodes 20 \
-    --output results_native_1_1_on_1_1.json
+    --output ../results/native_1_1_on_1_1.json
 
 # Test stitched model on same level
 python test_mario_agent.py \
-    --model scil_stitched_1_1_enc_to_1_2_pol.pth \
+    --model ../checkpoints/scil_stitched_1_1_enc_to_1_2_pol.pth \
     --model-type stitched \
-    --encoder-path scil_encoder_mario_1_1_efficientnet_b1_lam2.pth \
-    --policy-path scil_encoder_mario_1_2_efficientnet_b1_lam2.pth \
+    --encoder-path ../checkpoints/scil_encoder_mario_1_1_efficientnet_b1_lam2.pth \
+    --policy-path ../checkpoints/scil_encoder_mario_1_2_efficientnet_b1_lam2.pth \
     --level 1-1 \
     --episodes 20 \
-    --output results_stitched_on_1_1.json
+    --output ../results/stitched_on_1_1.json
 ```
 
 ## Command Line Options
@@ -151,47 +159,52 @@ Results are saved as JSON with the following structure:
 ## Example Workflow: Evaluating SAPS
 
 ```bash
+cd scripts
+
 # 1. Test native model 1 on its own level
 python test_mario_agent.py \
-    --model scil_encoder_mario_1_1_efficientnet_b1_lam2.pth \
+    --model ../checkpoints/scil_encoder_mario_1_1_efficientnet_b1_lam2.pth \
     --model-type native \
     --level 1-1 \
     --episodes 20 \
-    --output eval_native_1_1_on_1_1.json
+    --output ../results/eval_native_1_1_on_1_1.json
 
 # 2. Test native model 2 on its own level
 python test_mario_agent.py \
-    --model scil_encoder_mario_1_2_efficientnet_b1_lam2.pth \
+    --model ../checkpoints/scil_encoder_mario_1_2_efficientnet_b1_lam2.pth \
     --model-type native \
     --level 1-2 \
     --episodes 20 \
-    --output eval_native_1_2_on_1_2.json
+    --output ../results/eval_native_1_2_on_1_2.json
 
 # 3. Test stitched model (enc 1 + pol 2) on level 1-1
 python test_mario_agent.py \
-    --model scil_stitched_1_1_enc_to_1_2_pol.pth \
+    --model ../checkpoints/scil_stitched_1_1_enc_to_1_2_pol.pth \
     --model-type stitched \
-    --encoder-path scil_encoder_mario_1_1_efficientnet_b1_lam2.pth \
-    --policy-path scil_encoder_mario_1_2_efficientnet_b1_lam2.pth \
+    --encoder-path ../checkpoints/scil_encoder_mario_1_1_efficientnet_b1_lam2.pth \
+    --policy-path ../checkpoints/scil_encoder_mario_1_2_efficientnet_b1_lam2.pth \
     --level 1-1 \
     --episodes 20 \
-    --output eval_stitched_on_1_1.json
+    --output ../results/eval_stitched_on_1_1.json
 
 # 4. Cross-level generalization: test model 1 on level 1-2
 python test_mario_agent.py \
-    --model scil_encoder_mario_1_1_efficientnet_b1_lam2.pth \
+    --model ../checkpoints/scil_encoder_mario_1_1_efficientnet_b1_lam2.pth \
     --model-type native \
     --level 1-2 \
     --episodes 20 \
-    --output eval_native_1_1_on_1_2.json
+    --output ../results/eval_native_1_1_on_1_2.json
 ```
 
 ## Troubleshooting
 
 ### ImportError: gym_super_mario_bros
-Install the Mario environment:
+Install all dependencies from the project root:
 ```bash
-pip install gym-super-mario-bros
+cd /path/to/scil_saps
+make install-dev
+# or
+uv sync
 ```
 
 ### CUDA out of memory

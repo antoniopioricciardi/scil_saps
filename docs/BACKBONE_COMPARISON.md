@@ -63,9 +63,9 @@ For Mario with proper data:
 
 ## After Training:
 
-Models save as:
-- `scil_encoder_mario_resnet18.pth`
-- `scil_encoder_mario_efficientnet_b0.pth`
-- `scil_encoder_mario_efficientnet_b1.pth`
+Models save to `checkpoints/`:
+- `checkpoints/scil_encoder_mario_resnet18.pth`
+- `checkpoints/scil_encoder_mario_efficientnet_b0.pth`
+- `checkpoints/scil_encoder_mario_efficientnet_b1.pth`
 
-Compare them in `latent_analysis.ipynb` to see which gives cleaner action clustering!
+Compare them in `notebooks/latent_analysis.ipynb` to see which gives cleaner action clustering!

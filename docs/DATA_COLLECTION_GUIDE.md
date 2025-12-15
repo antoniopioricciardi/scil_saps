@@ -4,20 +4,20 @@
 
 ### 1. Collect from Different Levels
 
-Edit `collect_mario.py` and change the level for each collection session:
+Edit `scripts/collect_mario.py` and change the level for each collection session:
 
 ```python
 # For Level 1-1
 LEVEL = 'SuperMarioBros-1-1-v0'
-OUTPUT_FILE = "mario_1_1_expert.pkl"
+OUTPUT_FILE = "data/mario_1_1_expert.pkl"
 
 # For Level 1-2
 LEVEL = 'SuperMarioBros-1-2-v0'
-OUTPUT_FILE = "mario_1_2_expert.pkl"
+OUTPUT_FILE = "data/mario_1_2_expert.pkl"
 
 # For Level 1-3
 LEVEL = 'SuperMarioBros-1-3-v0'
-OUTPUT_FILE = "mario_1_3_expert.pkl"
+OUTPUT_FILE = "data/mario_1_3_expert.pkl"
 ```
 
 ### 2. Using Multiple Files in Training
@@ -26,21 +26,21 @@ The dataset now supports three ways to load data:
 
 #### Option 1: Glob Pattern (RECOMMENDED - Loads ALL files)
 ```python
-DATA_FILES = "mario_*_expert.pkl"  # Loads all matching files
+DATA_FILES = "data/mario_*_expert.pkl"  # Loads all matching files
 ```
 
 #### Option 2: Specific List of Files
 ```python
 DATA_FILES = [
-    "mario_1_1_expert.pkl",
-    "mario_1_2_expert.pkl",
-    "mario_1_3_expert.pkl"
+    "data/mario_1_1_expert.pkl",
+    "data/mario_1_2_expert.pkl",
+    "data/mario_1_3_expert.pkl"
 ]
 ```
 
 #### Option 3: Single File
 ```python
-DATA_FILES = "mario_1_1_expert.pkl"
+DATA_FILES = "data/mario_1_1_expert.pkl"
 ```
 
 ## Recommended Collection Strategy
@@ -57,9 +57,9 @@ DATA_FILES = "mario_1_1_expert.pkl"
 
 3. **Naming Convention**
    ```
-   mario_1_1_expert.pkl
-   mario_1_2_expert.pkl
-   mario_1_3_expert.pkl
+   data/mario_1_1_expert.pkl
+   data/mario_1_2_expert.pkl
+   data/mario_1_3_expert.pkl
    ```
 
 4. **Test Generalization**
@@ -79,8 +79,8 @@ Modify `train_scil.py`:
 
 ```python
 # Train on specific levels, test on others
-train_files = ["mario_1_1_expert.pkl", "mario_1_2_expert.pkl"]
-test_files = ["mario_1_3_expert.pkl"]
+train_files = ["data/mario_1_1_expert.pkl", "data/mario_1_2_expert.pkl"]
+test_files = ["data/mario_1_3_expert.pkl"]
 
 train_dataset = MarioSCILDataset(train_files)
 test_dataset = MarioSCILDataset(test_files)
@@ -92,15 +92,15 @@ This tests **generalization** - the key benefit of SCIL!
 
 1. Collect data from multiple levels:
    ```bash
-   # Edit collect_mario.py for each level, then:
-   python collect_mario.py  # Play level 1-1
-   python collect_mario.py  # Play level 1-2
-   python collect_mario.py  # Play level 1-3
+   # Edit scripts/collect_mario.py for each level, then run from project root:
+   python scripts/collect_mario.py  # Play level 1-1
+   python scripts/collect_mario.py  # Play level 1-2
+   python scripts/collect_mario.py  # Play level 1-3
    ```
 
 2. Train with all data:
    ```bash
-   python train_scil.py  # Uses glob pattern "mario_*_expert.pkl"
+   python train_scil.py  # Uses glob pattern "data/mario_*_expert.pkl"
    ```
 
 3. Check the output to see how many files were loaded!
