@@ -12,6 +12,7 @@ env/
 *.env
 *.env.*
 .claude/
+*.pkl
 
 # Jupyter
 .ipynb_checkpoints/

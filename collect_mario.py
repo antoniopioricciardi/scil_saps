@@ -73,7 +73,8 @@ while running:
     # Important: SCIL needs the frame *before* the action was taken
     # We resize to 84x84 here to save disk space? Or save raw?
     # Let's save RAW for now (240x256x3) to give maximum flexibility for your R3L/SAPS wrappers later.
-    data.append({"obs": obs, "action": action})
+    # CRITICAL: Make a copy to avoid reference bug where all frames point to same array
+    data.append({"obs": obs.copy(), "action": action})
     
     obs = next_obs
     

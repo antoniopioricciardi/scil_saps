@@ -5,6 +5,10 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [
+    "gym==0.25.2",
+    "gym-super-mario-bros>=7.4.0",
     "matplotlib>=3.9.4",
+    "nes-py>=8.2.1",
+    "numpy<2.0",
     "pygame>=2.6.1",
 ]
