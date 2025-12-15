@@ -7,8 +7,12 @@ Records performance statistics and optionally displays gameplay
 import argparse
 import json
 import time
+import sys
 from pathlib import Path
 from collections import defaultdict
+
+# Add parent directory to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import torch
 import torch.nn as nn
