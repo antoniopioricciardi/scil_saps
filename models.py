@@ -3,13 +3,12 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class SCILEncoder(nn.Module):
-    def __init__(self, num_actions=7, projection_dim=128):
+    def __init__(self, num_actions=7):
         """
-        SCIL Model with both policy head and projection head
+        SCIL Model - Nature CNN backbone with policy head
 
         Args:
             num_actions: Number of discrete actions (7 for Mario SIMPLE_MOVEMENT)
-            projection_dim: Dimension of projection head output (z)
         """
         super(SCILEncoder, self).__init__()
 
@@ -23,15 +22,8 @@ class SCILEncoder(nn.Module):
         self.fc = nn.Linear(3136, 512)
 
         # Policy Head (for action prediction - L_pred)
+        # As per paper Figure 1: policy head operates on embeddings e_i directly
         self.policy_head = nn.Linear(512, num_actions)
-
-        # Projection Head (for SCIL contrastive loss - L_SupCon)
-        # Simpler 2-layer MLP without batch norm
-        self.projection_head = nn.Sequential(
-            nn.Linear(512, 256),
-            nn.ReLU(),
-            nn.Linear(256, projection_dim)
-        )
 
     def forward(self, x):
         # Representation (h) - This is what we keep for RL/SAPS
@@ -41,10 +33,10 @@ class SCILEncoder(nn.Module):
         x = x.view(x.size(0), -1)
         h = F.relu(self.fc(x))
 
-        # Action logits (for L_pred)
+        # SCIL Architecture (as per paper Figure 1):
+        # Sequential flow: backbone → embeddings e_i (h) → BOTH losses use e_i
+        # 1. SupCon loss uses e_i (h) - normalized internally by SupConLoss
+        # 2. Policy head uses e_i (h) → action predictions → L_pred
         action_logits = self.policy_head(h)
 
-        # Projection (z) - For L_SupCon
-        z = self.projection_head(h)
-
-        return action_logits, h, z
+        return action_logits, h

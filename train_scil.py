@@ -9,18 +9,43 @@ from models import SCILEncoder
 from losses_paper import SupConLoss
 
 # --- CONFIG ---
-# DATA_FILES can be:
-#   - Single file: "mario_1_1_expert.pkl"
-#   - List of files: ["mario_1_1.pkl", "mario_1_2.pkl", "mario_1_3.pkl"]
-#   - Glob pattern: "mario_*_expert.pkl" (loads ALL matching files)
+# Data selection - examples:
+#   "mario_*_expert.pkl"           → all_levels
+#   "mario_1_1_expert.pkl"         → 1_1
+#   ["mario_1_1.pkl", "mario_1_2.pkl"] → 1_1_1_2
 DATA_FILES = "mario_*_expert.pkl"  # Will load all expert data files
 
-SAVE_PATH = "scil_encoder_mario.pth"
-BATCH_SIZE = 64
+# Auto-generate data tag for filename
+def get_data_tag(data_files):
+    """Generate a descriptive tag from DATA_FILES pattern"""
+    if isinstance(data_files, str):
+        if '*' in data_files or 'all' in data_files.lower():
+            return "all_levels"
+        # Extract level info (e.g., "mario_1_1_expert.pkl" → "1_1")
+        import re
+        match = re.search(r'mario_(\d+_\d+)', data_files)
+        if match:
+            return match.group(1)
+        return "custom"
+    elif isinstance(data_files, list):
+        # Multiple specific files
+        import re
+        levels = []
+        for f in data_files:
+            match = re.search(r'mario_(\d+_\d+)', f)
+            if match:
+                levels.append(match.group(1))
+        return "_".join(levels) if levels else "multi"
+    return "unknown"
+
+DATA_TAG = get_data_tag(DATA_FILES)
+LAMBDA_SUPCON = 2.0  # Increased from 0.5 - make SupCon more important for clustering
+SAVE_PATH = f"scil_encoder_mario_{DATA_TAG}_naturecnn_lam{LAMBDA_SUPCON}.pth"
+
+BATCH_SIZE = 256  # Increased from 64 - SCIL paper recommends large batches
 LR = 3e-4
-EPOCHS = 50
+EPOCHS = 80  # Increased for better convergence with higher lambda
 TEMPERATURE = 0.07
-LAMBDA_SUPCON = 0.0  # Weight for SupCon loss (set to 0 for basic IL, 0.5 for SCIL)
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 def validate(model, val_loader):
@@ -34,7 +59,7 @@ def validate(model, val_loader):
         for obs, actions in val_loader:
             obs, actions = obs.to(DEVICE), actions.to(DEVICE)
 
-            action_logits, _, _ = model(obs)
+            action_logits, _ = model(obs)
             predictions = torch.argmax(action_logits, dim=1)
 
             correct += (predictions == actions).sum().item()
@@ -110,14 +135,15 @@ def main():
             obs, actions = obs.to(DEVICE), actions.to(DEVICE)
 
             # Forward pass
-            action_logits, h, z = model(obs)
+            action_logits, h = model(obs)
 
             # L_pred: Cross-Entropy Loss for action prediction
             # NOTE: Extreme class weights (35x) may cause instability - trying without first
             pred_loss = F.cross_entropy(action_logits, actions)  # , weight=class_weights)
 
             # L_SupCon: Supervised Contrastive Loss (from paper implementation)
-            supcon_loss = supcon_criterion(z, actions)
+            # As per paper Figure 1: SupCon operates on embeddings e_i (h) directly
+            supcon_loss = supcon_criterion(h, actions)
 
             # Combined Loss (as per SCIL paper)
             loss = pred_loss + LAMBDA_SUPCON * supcon_loss

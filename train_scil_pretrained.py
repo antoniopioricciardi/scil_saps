@@ -1,5 +1,5 @@
 # train_scil_pretrained.py
-# SCIL training with pretrained ResNet18 encoder
+# SCIL training with pretrained encoder (ResNet18 or EfficientNet)
 
 import torch
 import torch.nn.functional as F
@@ -8,18 +8,54 @@ from torch.utils.data import DataLoader, random_split
 # Import our custom modules
 from dataset import MarioSCILDataset
 from models_pretrained import SCILEncoderPretrained
+from model_efficientnet import SCILEncoderEfficientNet
 from losses_paper import SupConLoss
 
 # --- CONFIG ---
-DATA_FILES = "mario_*_expert.pkl"  # Will load all expert data files
+# Data selection - examples:
+#   "mario_*_expert.pkl"           → all_levels
+#   "mario_1_1_expert.pkl"         → 1_1
+#   "mario_1_[12]_expert.pkl"      → 1_1_1_2
+#   ["mario_1_1.pkl", "mario_1_2.pkl"] → 1_1_1_2
+# DATA_FILES = "mario_*_expert.pkl"
+DATA_FILES = "mario_1_2_expert.pkl"
 
-SAVE_PATH = "scil_encoder_mario_pretrained.pth"
-BATCH_SIZE = 64
+# Model selection: 'resnet18' or 'efficientnet-b0' or 'efficientnet-b1' or 'efficientnet-b2'
+BACKBONE = "efficientnet-b1"  # Options: 'resnet18', 'efficientnet-b0', 'efficientnet-b1', 'efficientnet-b2'
+
+# Auto-generate data tag for filename
+def get_data_tag(data_files):
+    """Generate a descriptive tag from DATA_FILES pattern"""
+    if isinstance(data_files, str):
+        if '*' in data_files or 'all' in data_files.lower():
+            return "all_levels"
+        # Extract level info (e.g., "mario_1_1_expert.pkl" → "1_1")
+        import re
+        match = re.search(r'mario_(\d+_\d+)', data_files)
+        if match:
+            return match.group(1)
+        return "custom"
+    elif isinstance(data_files, list):
+        # Multiple specific files
+        import re
+        levels = []
+        for f in data_files:
+            match = re.search(r'mario_(\d+_\d+)', f)
+            if match:
+                levels.append(match.group(1))
+        return "_".join(levels) if levels else "multi"
+    return "unknown"
+
+DATA_TAG = get_data_tag(DATA_FILES)
+
+BATCH_SIZE = 32  # Reduced from 64 for 8GB GPU with EfficientNet-B1
 LR = 1e-3 #3e-4
-EPOCHS = 50
-TEMPERATURE = 0.07
-LAMBDA_SUPCON = 0.0 #0.5  # Weight for SupCon loss
+EPOCHS = 80
+TEMPERATURE = 0.05
+LAMBDA_SUPCON = 2 #0.5  # Weight for SupCon loss
 FREEZE_BACKBONE = False  # Set True for faster training, False for better performance
+
+SAVE_PATH = f"scil_encoder_mario_{DATA_TAG}_{BACKBONE.replace('-', '_')}_lam{LAMBDA_SUPCON}.pth"
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
@@ -37,7 +73,7 @@ def validate(model, val_loader):
         for obs, actions in val_loader:
             obs, actions = obs.to(DEVICE), actions.to(DEVICE)
 
-            action_logits, h, _ = model(obs)
+            action_logits, h = model(obs)
             predictions = torch.argmax(action_logits, dim=1)
 
             correct += (predictions == actions).sum().item()
@@ -70,6 +106,9 @@ def validate(model, val_loader):
 
 
 def main():
+    # Clear GPU cache before training
+    torch.cuda.empty_cache()
+
     # 1. Setup Data
     dataset = MarioSCILDataset(DATA_FILES, img_size=224, use_imagenet_norm=True)
 
@@ -104,11 +143,21 @@ def main():
     print(f"\nClass weights: {class_weights.cpu().numpy()}")
 
     # 2. Setup Model with Pretrained Encoder
-    model = SCILEncoderPretrained(
-        num_actions=7,
-        projection_dim=128,
-        freeze_backbone=FREEZE_BACKBONE
-    ).to(DEVICE)
+    if BACKBONE == 'resnet18':
+        model = SCILEncoderPretrained(
+            num_actions=7,
+            freeze_backbone=FREEZE_BACKBONE
+        ).to(DEVICE)
+    elif BACKBONE.startswith('efficientnet'):
+        # Extract variant (b0, b1, b2)
+        variant = BACKBONE.split('-')[1]  # 'efficientnet-b0' -> 'b0'
+        model = SCILEncoderEfficientNet(
+            num_actions=7,
+            freeze_backbone=FREEZE_BACKBONE,
+            variant=variant
+        ).to(DEVICE)
+    else:
+        raise ValueError(f"Unknown backbone: {BACKBONE}. Choose 'resnet18' or 'efficientnet-b0/b1/b2'")
 
     # Use different learning rates for pretrained backbone vs heads
     if FREEZE_BACKBONE:
@@ -121,8 +170,7 @@ def main():
         # Fine-tune backbone with lower LR, train heads with normal LR
         optimizer = torch.optim.Adam([
             {'params': model.backbone.parameters(), 'lr': LR / 10},  # Lower LR for pretrained
-            {'params': model.policy_head.parameters()},
-            {'params': model.projection_head.parameters()}
+            {'params': model.policy_head.parameters()}
         ], lr=LR)
 
     # Setup SupCon loss (from paper)
@@ -130,7 +178,7 @@ def main():
 
     print(f"Starting training on {DEVICE}...")
     print(f"Lambda SupCon: {LAMBDA_SUPCON}")
-    print(f"Using pretrained ResNet18 backbone")
+    print(f"Using pretrained {BACKBONE.upper()} backbone")
 
     # Debug: Store initial policy head weights to verify they change
     initial_policy_weight = model.policy_head.weight.data.clone()
@@ -149,13 +197,14 @@ def main():
             obs, actions = obs.to(DEVICE), actions.to(DEVICE)
 
             # Forward pass
-            action_logits, h, z = model(obs)
+            action_logits, h = model(obs)
 
             # L_pred: Cross-Entropy Loss for action prediction (with class weighting)
             pred_loss = F.cross_entropy(action_logits, actions, weight=class_weights)
 
             # L_SupCon: Supervised Contrastive Loss (from paper implementation)
-            supcon_loss = supcon_criterion(z, actions)
+            # As per paper Figure 1: SupCon operates on embeddings e_i (h) directly
+            supcon_loss = supcon_criterion(h, actions)
 
             # Combined Loss (as per SCIL paper)
             loss = pred_loss + LAMBDA_SUPCON * supcon_loss
@@ -191,11 +240,11 @@ def main():
               f"Loss: {avg_loss:.4f} (Pred: {avg_pred:.4f}, SupCon: {avg_supcon:.4f}) | "
               f"Grad: {avg_grad_norm:.4f} | "
               f"Val Acc: {val_acc:.2f}%")
-        print(f"  Val Stats: {unique_preds} unique predictions, "
-              f"most common: class {most_common_pred} ({most_common_count}/{total_val} = {100*most_common_count/total_val:.1f}%)")
-        print(f"  Weight change: {weight_change:.6f}, Feature std: {feature_std:.4f}")
-        print(f"  Logit means: {logit_mean.numpy()}")
-        print(f"  Logit stds:  {logit_std.numpy()}")
+        # print(f"  Val Stats: {unique_preds} unique predictions, "
+        #       f"most common: class {most_common_pred} ({most_common_count}/{total_val} = {100*most_common_count/total_val:.1f}%)")
+        # print(f"  Weight change: {weight_change:.6f}, Feature std: {feature_std:.4f}")
+        # print(f"  Logit means: {logit_mean.numpy()}")
+        # print(f"  Logit stds:  {logit_std.numpy()}")
 
         # Save best model
         if val_acc > best_val_acc:
