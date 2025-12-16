@@ -81,7 +81,7 @@ while running:
     if done:
         obs = env.reset()
 
-    clock.tick(30) # Limit to 30 FPS for playability
+    clock.tick(60) # Limit to 30 FPS for playability
 
 env.close()
 pygame.quit()
