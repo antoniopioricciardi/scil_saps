@@ -52,7 +52,7 @@ BATCH_SIZE = 32  # Reduced from 64 for 8GB GPU with EfficientNet-B1
 LR = 1e-3 #3e-4
 EPOCHS = 80
 TEMPERATURE = 0.05
-LAMBDA_SUPCON = 2 #0.5  # Weight for SupCon loss
+LAMBDA_SUPCON = 1 #0.5  # Weight for SupCon loss
 FREEZE_BACKBONE = False  # Set True for faster training, False for better performance
 
 SAVE_PATH = f"checkpoints/scil_encoder_mario_{DATA_TAG}_{BACKBONE.replace('-', '_')}_lam{LAMBDA_SUPCON}.pth"
@@ -170,6 +170,7 @@ def main():
         # Fine-tune backbone with lower LR, train heads with normal LR
         optimizer = torch.optim.Adam([
             {'params': model.backbone.parameters(), 'lr': LR / 10},  # Lower LR for pretrained
+            # {'params': model.fc.parameters()},  # Projection layer
             {'params': model.policy_head.parameters()}
         ], lr=LR)
 

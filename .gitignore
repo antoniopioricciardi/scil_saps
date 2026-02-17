@@ -17,6 +17,9 @@ env/
 # Jupyter
 .ipynb_checkpoints/
 
+# models
+checkpoints/
+
 # OS cruft
 .DS_Store
 Thumbs.db

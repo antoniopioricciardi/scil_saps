@@ -87,6 +87,19 @@ cd scripts
 
 See full documentation in `docs/` for details.
 
+
+## DISPLAY ISSUES
+
+If you encounter display issues with visualizing the agents during tests, try:
+-  **Option 1:** Use xvfb (virtual framebuffer)                                                                                    
+
+`xvfb-run python your_script.py`
+
+-  **Option 2:** Set the environment variable
+`export DISPLAY=:0`
+
 ---
 
 **Happy experimenting! 🎮🤖**
+
+

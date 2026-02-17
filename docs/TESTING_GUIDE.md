@@ -11,14 +11,14 @@ cd scripts
 
 # Test model on level 1-1 (10 episodes, no rendering)
 python test_mario_agent.py \
-    --model ../checkpoints/scil_encoder_mario_1_1_efficientnet_b1_lam2.pth \
+    --model ../checkpoints/scil_encoder_mario_1_1_efficientnet_b1_lam1.pth \
     --model-type native \
     --level 1-1 \
     --episodes 10
 
 # Test with rendering (watch the agent play)
 python test_mario_agent.py \
-    --model ../checkpoints/scil_encoder_mario_1_1_efficientnet_b1_lam2.pth \
+    --model ../checkpoints/scil_encoder_mario_1_1_efficientnet_b1_lam1.pth \
     --model-type native \
     --level 1-1 \
     --episodes 5 \
@@ -26,7 +26,7 @@ python test_mario_agent.py \
 
 # Test on different level
 python test_mario_agent.py \
-    --model ../checkpoints/scil_encoder_mario_1_2_efficientnet_b1_lam2.pth \
+    --model ../checkpoints/scil_encoder_mario_1_2_efficientnet_b1_lam1.pth \
     --model-type native \
     --level 1-2 \
     --episodes 10
@@ -34,18 +34,50 @@ python test_mario_agent.py \
 
 ### Test a Stitched Model
 
+#### Option 1: Load Pre-Saved Stitched Model
+
 ```bash
 cd scripts
 
-# Test stitched model (encoder from 1-1, policy from 1-2)
+# Test pre-saved stitched model
 python test_mario_agent.py \
     --model ../checkpoints/scil_stitched_1_1_enc_to_1_2_pol.pth \
     --model-type stitched \
-    --encoder-path ../checkpoints/scil_encoder_mario_1_1_efficientnet_b1_lam2.pth \
-    --policy-path ../checkpoints/scil_encoder_mario_1_2_efficientnet_b1_lam2.pth \
     --level 1-1 \
     --episodes 10
 ```
+
+#### Option 2: Create Stitched Model On-The-Fly (Recommended)
+
+```bash
+cd scripts
+
+# Dynamically create stitched model from components
+# This ensures you're using the exact encoder, policy, and transformation you want
+python test_mario_agent.py \
+    --model-type stitched \
+    --encoder-path ../checkpoints/scil_encoder_mario_1_1_efficientnet_b1_lam0.pth \
+    --policy-path ../checkpoints/scil_encoder_mario_1_2_efficientnet_b1_lam0.pth \
+    --transformation-path ../checkpoints/saps_transformation_1_1_to_1_2.pth \
+    --level 1-2 \
+    --episodes 10
+
+# With rendering to watch the stitched agent play
+python test_mario_agent.py \
+    --model-type stitched \
+    --encoder-path ../checkpoints/scil_encoder_mario_1_1_efficientnet_b1_lam0.pth \
+    --policy-path ../checkpoints/scil_encoder_mario_1_2_efficientnet_b1_lam0.pth \
+    --transformation-path ../checkpoints/saps_transformation_1_1_to_1_2.pth \
+    --level 1-2 \
+    --episodes 5 \
+    --render
+```
+
+**Why use on-the-fly creation?**
+- **Flexibility**: Test any combination of encoder/policy/transformation without pre-saving
+- **Correctness**: Ensures you're using the exact components you intend
+- **Experimentation**: Quickly test different SAPS transformations with the same encoder/policy pair
+- **Reproducibility**: Clear provenance of what components make up the stitched model
 
 ### Compare Models
 
@@ -54,18 +86,18 @@ cd scripts
 
 # Test native model trained on 1-1
 python test_mario_agent.py \
-    --model ../checkpoints/scil_encoder_mario_1_1_efficientnet_b1_lam2.pth \
+    --model ../checkpoints/scil_encoder_mario_1_1_efficientnet_b1_lam0.pth \
     --model-type native \
     --level 1-1 \
     --episodes 20 \
     --output ../results/native_1_1_on_1_1.json
 
-# Test stitched model on same level
+# Test stitched model on same level (created on-the-fly)
 python test_mario_agent.py \
-    --model ../checkpoints/scil_stitched_1_1_enc_to_1_2_pol.pth \
     --model-type stitched \
-    --encoder-path ../checkpoints/scil_encoder_mario_1_1_efficientnet_b1_lam2.pth \
-    --policy-path ../checkpoints/scil_encoder_mario_1_2_efficientnet_b1_lam2.pth \
+    --encoder-path ../checkpoints/scil_encoder_mario_1_1_efficientnet_b1_lam0.pth \
+    --policy-path ../checkpoints/scil_encoder_mario_1_2_efficientnet_b1_lam0.pth \
+    --transformation-path ../checkpoints/saps_transformation_1_1_to_1_2.pth \
     --level 1-1 \
     --episodes 20 \
     --output ../results/stitched_on_1_1.json
@@ -75,6 +107,9 @@ python test_mario_agent.py \
 
 ### Required Arguments
 - `--model`: Path to model checkpoint (.pth file)
+  - Required for `native` models
+  - Required for pre-saved `stitched` models
+  - Not required when creating stitched models on-the-fly
 
 ### Environment Settings
 - `--level`: Mario level to test on (default: '1-1')
@@ -83,9 +118,12 @@ python test_mario_agent.py \
 ### Model Settings
 - `--model-type`: Type of model (default: 'native')
   - `native`: Standard SCIL model
-  - `stitched`: SAPS stitched model
-- `--encoder-path`: Path to encoder model (required for stitched models)
-- `--policy-path`: Path to policy model (required for stitched models)
+  - `stitched`: SAPS stitched model (pre-saved or created on-the-fly)
+- `--encoder-path`: Path to encoder checkpoint (for creating stitched models on-the-fly)
+- `--policy-path`: Path to policy checkpoint (for creating stitched models on-the-fly)
+- `--transformation-path`: Path to SAPS transformation file (for creating stitched models on-the-fly)
+  - When provided with `--encoder-path` and `--policy-path`, creates stitched model dynamically
+  - Transformation file should contain 'R' (rotation matrix) and 'b' (bias vector)
 
 ### Evaluation Settings
 - `--episodes`: Number of episodes to run (default: 10)
@@ -148,7 +186,7 @@ Results are saved as JSON with the following structure:
   ],
   "config": {
     "level": "1-1",
-    "model": "scil_encoder_mario_1_1_efficientnet_b1_lam2.pth",
+    "model": "scil_encoder_mario_1_1_efficientnet_b1_lam1.pth",
     "model_type": "native",
     "episodes": 10,
     "seed": 42
@@ -163,7 +201,7 @@ cd scripts
 
 # 1. Test native model 1 on its own level
 python test_mario_agent.py \
-    --model ../checkpoints/scil_encoder_mario_1_1_efficientnet_b1_lam2.pth \
+    --model ../checkpoints/scil_encoder_mario_1_1_efficientnet_b1_lam0.pth \
     --model-type native \
     --level 1-1 \
     --episodes 20 \
@@ -171,29 +209,39 @@ python test_mario_agent.py \
 
 # 2. Test native model 2 on its own level
 python test_mario_agent.py \
-    --model ../checkpoints/scil_encoder_mario_1_2_efficientnet_b1_lam2.pth \
+    --model ../checkpoints/scil_encoder_mario_1_2_efficientnet_b1_lam0.pth \
     --model-type native \
     --level 1-2 \
     --episodes 20 \
     --output ../results/eval_native_1_2_on_1_2.json
 
-# 3. Test stitched model (enc 1 + pol 2) on level 1-1
+# 3. Test stitched model (enc 1 + pol 2) on level 1-2 (created on-the-fly)
 python test_mario_agent.py \
-    --model ../checkpoints/scil_stitched_1_1_enc_to_1_2_pol.pth \
     --model-type stitched \
-    --encoder-path ../checkpoints/scil_encoder_mario_1_1_efficientnet_b1_lam2.pth \
-    --policy-path ../checkpoints/scil_encoder_mario_1_2_efficientnet_b1_lam2.pth \
-    --level 1-1 \
+    --encoder-path ../checkpoints/scil_encoder_mario_1_1_efficientnet_b1_lam0.pth \
+    --policy-path ../checkpoints/scil_encoder_mario_1_2_efficientnet_b1_lam0.pth \
+    --transformation-path ../checkpoints/saps_transformation_1_1_to_1_2.pth \
+    --level 1-2 \
     --episodes 20 \
-    --output ../results/eval_stitched_on_1_1.json
+    --output ../results/eval_stitched_on_1_2.json
 
 # 4. Cross-level generalization: test model 1 on level 1-2
 python test_mario_agent.py \
-    --model ../checkpoints/scil_encoder_mario_1_1_efficientnet_b1_lam2.pth \
+    --model ../checkpoints/scil_encoder_mario_1_1_efficientnet_b1_lam0.pth \
     --model-type native \
     --level 1-2 \
     --episodes 20 \
     --output ../results/eval_native_1_1_on_1_2.json
+
+# 5. BONUS: Test stitched model on level 1-1 (encoder's native level)
+python test_mario_agent.py \
+    --model-type stitched \
+    --encoder-path ../checkpoints/scil_encoder_mario_1_1_efficientnet_b1_lam0.pth \
+    --policy-path ../checkpoints/scil_encoder_mario_1_2_efficientnet_b1_lam0.pth \
+    --transformation-path ../checkpoints/saps_transformation_1_1_to_1_2.pth \
+    --level 1-1 \
+    --episodes 20 \
+    --output ../results/eval_stitched_on_1_1.json
 ```
 
 ## Troubleshooting
@@ -223,3 +271,5 @@ Or reduce batch inference (model already uses batch_size=1 for testing).
 3. **Test on multiple levels** to evaluate generalization
 4. **Compare native vs stitched** to validate SAPS effectiveness
 5. **Check action distribution** to detect degenerate policies (e.g., only NOOP)
+6. **Prefer on-the-fly stitching** for maximum flexibility and correctness
+7. **Test different transformations** by keeping encoder/policy fixed and varying `--transformation-path`
